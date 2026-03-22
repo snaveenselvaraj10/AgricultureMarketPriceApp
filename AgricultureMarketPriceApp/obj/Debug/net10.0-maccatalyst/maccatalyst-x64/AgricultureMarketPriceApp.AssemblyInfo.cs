@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("AgricultureMarketPriceApp")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+8fcb575f0aca1548ff8de680e790c2925c5eee3e")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0+aa571d1298b06931c2087baf4c5c0a000900c263")]
 [assembly: System.Reflection.AssemblyProductAttribute("AgricultureMarketPriceApp")]
 [assembly: System.Reflection.AssemblyTitleAttribute("AgricultureMarketPriceApp")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

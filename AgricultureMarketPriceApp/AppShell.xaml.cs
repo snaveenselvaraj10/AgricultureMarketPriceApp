@@ -5,6 +5,7 @@
         public AppShell()
         {
             InitializeComponent();
+            Routing.RegisterRoute("monthlygraph", typeof(Pages.MonthlyGraphPage));
         }
     }
 }

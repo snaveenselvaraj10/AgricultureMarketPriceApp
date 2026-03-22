@@ -58,6 +58,16 @@ build_metadata.AdditionalFiles.NoWarn =
 build_metadata.AdditionalFiles.EnableDiagnostics = 
 build_metadata.AdditionalFiles.LineInfo = 
 
+[D:/NetProjects/AgricultureMarketPriceApp/AgricultureMarketPriceApp/Pages/MonthlyGraphPage.xaml]
+build_metadata.AdditionalFiles.GenKind = Xaml
+build_metadata.AdditionalFiles.ManifestResourceName = AgricultureMarketPriceApp.Pages.MonthlyGraphPage.xaml
+build_metadata.AdditionalFiles.TargetPath = Pages\MonthlyGraphPage.xaml
+build_metadata.AdditionalFiles.RelativePath = Pages\MonthlyGraphPage.xaml
+build_metadata.AdditionalFiles.Inflator = SourceGen
+build_metadata.AdditionalFiles.NoWarn = 
+build_metadata.AdditionalFiles.EnableDiagnostics = 
+build_metadata.AdditionalFiles.LineInfo = 
+
 [D:/NetProjects/AgricultureMarketPriceApp/AgricultureMarketPriceApp/Resources/Styles/Colors.xaml]
 build_metadata.AdditionalFiles.GenKind = Xaml
 build_metadata.AdditionalFiles.ManifestResourceName = AgricultureMarketPriceApp.Resources.Styles.Colors.xaml

@@ -2,23 +2,25 @@
 {
     public partial class MainPage : ContentPage
     {
-        int count = 0;
+        private readonly Services.ApiService _apiService;
 
-        public MainPage()
+        public MainPage(Services.ApiService apiService)
         {
             InitializeComponent();
+            _apiService = apiService;
+
+            Loaded += MainPage_Loaded;
         }
 
-        private void OnCounterClicked(object? sender, EventArgs e)
+        private async void MainPage_Loaded(object? sender, EventArgs e)
         {
-            count++;
+            var data = await _apiService.GetDailyPricesAsync();
+            PricesCollection.ItemsSource = data;
+        }
 
-            if (count == 1)
-                CounterBtn.Text = $"Clicked {count} time";
-            else
-                CounterBtn.Text = $"Clicked {count} times";
-
-            SemanticScreenReader.Announce(CounterBtn.Text);
+        private async void OnMonthlyGraphClicked(object? sender, EventArgs e)
+        {
+            await Shell.Current.GoToAsync("monthlygraph");
         }
     }
 }

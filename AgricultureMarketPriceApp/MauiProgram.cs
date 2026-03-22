@@ -1,4 +1,6 @@
 ﻿using Microsoft.Extensions.Logging;
+using System.Globalization;
+using AgricultureMarketPriceApp.Services;
 
 namespace AgricultureMarketPriceApp
 {
@@ -18,6 +20,21 @@ namespace AgricultureMarketPriceApp
 #if DEBUG
     		builder.Logging.AddDebug();
 #endif
+
+            // Register services
+            builder.Services.AddSingleton<ApiService>();
+
+            // Initialize localization based on device culture
+            try
+            {
+                var culture = CultureInfo.CurrentCulture;
+                CultureInfo.DefaultThreadCurrentCulture = culture;
+                CultureInfo.DefaultThreadCurrentUICulture = culture;
+            }
+            catch
+            {
+                // ignore
+            }
 
             return builder.Build();
         }
