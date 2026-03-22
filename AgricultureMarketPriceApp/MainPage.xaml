@@ -6,6 +6,12 @@
              Title="Daily Prices">
 
     <VerticalStackLayout Padding="12">
+        <HorizontalStackLayout Padding="0,8" Spacing="8">
+            <Entry x:Name="ApiKeyEntry" Placeholder="Enter API Key" HorizontalOptions="FillAndExpand" />
+            <Button Text="Save Key" Clicked="OnSaveApiKeyClicked" />
+        </HorizontalStackLayout>
+        <Label x:Name="ApiKeyStatusLabel" FontSize="Small" TextColor="Gray" />
+
         <HorizontalStackLayout HorizontalOptions="Fill" VerticalOptions="Center" Padding="0,8">
             <Label Text="Daily Market Prices" FontAttributes="Bold" HorizontalOptions="StartAndExpand" />
             <Button Text="Monthly Graph" Clicked="OnMonthlyGraphClicked" />
