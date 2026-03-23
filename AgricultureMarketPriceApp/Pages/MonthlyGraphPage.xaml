@@ -6,6 +6,6 @@
 
     <VerticalStackLayout Padding="20">
         <Label Text="Monthly price graph (placeholder)" FontAttributes="Bold" />
-        <Label Text="Implement charting library later (e.g., Microcharts or SkiaSharp)" />
+        <Label Text="Chart integration will be added later." />
     </VerticalStackLayout>
 </ContentPage>

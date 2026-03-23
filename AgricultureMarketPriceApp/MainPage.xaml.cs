@@ -3,7 +3,6 @@
     public partial class MainPage : ContentPage
     {
         private readonly Services.ApiService _apiService;
-        private const string ApiKeyStorageKey = "ApiKey";
 
         public MainPage(Services.ApiService apiService)
         {
@@ -15,67 +14,79 @@
 
         private async void MainPage_Loaded(object? sender, EventArgs e)
         {
-            try
-            {
-                var stored = await SecureStorage.Default.GetAsync(ApiKeyStorageKey);
-                if (!string.IsNullOrWhiteSpace(stored))
-                {
-                    ApiKeyEntry.Text = stored;
-                    ApiKeyStatusLabel.Text = "Using saved API key";
-                }
+            // Load available states/commodities for pickers - for now populate from enums
+            StatePicker.ItemsSource = Enum.GetNames(typeof(Services.StateEnum));
+            CommodityPicker.ItemsSource = Enum.GetNames(typeof(Services.CommodityEnum));
 
-                var result = await _apiService.GetDailyPricesWithDiagnosticsAsync(stored, null, null);
-                if (result.Success)
-                {
-                    PricesCollection.ItemsSource = result.Data;
-                    ApiKeyStatusLabel.Text = "Loaded prices";
-                }
-                else
-                {
-                    ApiKeyStatusLabel.Text = $"API error: {result.StatusCode} {result.ReasonPhrase}";
-                }
-            }
-            catch (Exception ex)
-            {
-                ApiKeyStatusLabel.Text = ex.Message;
-            }
+            await LoadSummariesAsync();
         }
 
-        private async void OnMonthlyGraphClicked(object? sender, EventArgs e)
+        private async Task LoadSummariesAsync(string state = null, string commodity = null)
         {
-            await Shell.Current.GoToAsync("monthlygraph");
-        }
-
-        private async void OnSaveApiKeyClicked(object? sender, EventArgs e)
-        {
-            var key = ApiKeyEntry.Text?.Trim();
-            if (string.IsNullOrWhiteSpace(key))
+            // Fetch latest day and previous day records (limit larger to ensure we get previous day)
+            var latest = await _apiService.GetDailyPricesAsync(apiKey: null, state: state, commodity: commodity, limit: 500);
+            // Attempt to determine previous day date from records
+            if (latest == null || !latest.Any())
             {
-                await DisplayAlert("API Key", "Please enter a valid API key.", "OK");
+                PricesCollection.ItemsSource = new List<Models.CommoditySummary>();
                 return;
             }
 
-            try
+            // Group by commodity and compute average modal price for latest day
+            var groups = latest.GroupBy(r => r.Commodity).Select(g => new Models.CommoditySummary
             {
-                await SecureStorage.Default.SetAsync(ApiKeyStorageKey, key);
-                ApiKeyStatusLabel.Text = "API key saved";
+                Commodity = g.Key,
+                AverageModalPrice = g.Average(x => x.Modal_price ?? 0),
+                Unit = "", // unit not provided reliably
+                Icon = "dotnet_bot.png"
+            }).ToList();
 
-                // Try a fetch with the new key
-                var result = await _apiService.GetDailyPricesWithDiagnosticsAsync(key, null, null);
-                if (result.Success)
-                {
-                    PricesCollection.ItemsSource = result.Data;
-                    ApiKeyStatusLabel.Text = "Loaded prices with saved key";
-                }
-                else
-                {
-                    ApiKeyStatusLabel.Text = $"API error: {result.StatusCode} {result.ReasonPhrase}";
-                }
-            }
-            catch (Exception ex)
+            // For percent change, fetch previous day by filtering arrival_date
+            // Determine most recent two dates in the data
+            var dates = latest.Select(r => r.Arrival_Date).Distinct().ToList();
+            if (dates.Count >= 2)
             {
-                await DisplayAlert("Error", ex.Message, "OK");
+                // Assume arrival_date formatted dd/MM/yyyy, pick top two
+                var parsed = dates.Select(d => DateTime.TryParseExact(d, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var dt) ? dt : (DateTime?)null)
+                    .Where(x => x.HasValue).Select(x => x.Value).OrderByDescending(x => x).ToList();
+
+                if (parsed.Count >= 2)
+                {
+                    var latestDate = parsed[0].ToString("dd/MM/yyyy");
+                    var prevDate = parsed[1].ToString("dd/MM/yyyy");
+
+                    var prevRecords = await _apiService.GetDailyPricesAsync(apiKey: null, state: state, commodity: commodity, limit: 500);
+                    var prevGroups = prevRecords.Where(r => r.Arrival_Date == prevDate).GroupBy(r => r.Commodity)
+                        .ToDictionary(g => g.Key, g => g.Average(x => x.Modal_price ?? 0));
+
+                    foreach (var s in groups)
+                    {
+                        if (prevGroups.TryGetValue(s.Commodity, out var prevAvg) && prevAvg > 0)
+                        {
+                            var change = (s.AverageModalPrice - prevAvg) / prevAvg;
+                            s.PercentChange = change;
+                        }
+                        else
+                        {
+                            s.PercentChange = 0;
+                        }
+                    }
+                }
             }
+
+            PricesCollection.ItemsSource = groups.OrderByDescending(g => g.AverageModalPrice).ToList();
+        }
+
+        private async void OnApplyFiltersClicked(object? sender, EventArgs e)
+        {
+            string state = null;
+            string commodity = null;
+            if (StatePicker.SelectedIndex >= 0)
+                state = StatePicker.Items[StatePicker.SelectedIndex];
+            if (CommodityPicker.SelectedIndex >= 0)
+                commodity = CommodityPicker.Items[CommodityPicker.SelectedIndex];
+
+            await LoadSummariesAsync(state, commodity);
         }
     }
 }

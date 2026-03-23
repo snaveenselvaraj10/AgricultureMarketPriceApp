@@ -66,12 +66,20 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
+     <PackageReference Include="Microsoft.Maui.Controls" Version="$(MauiVersion)" />
 		<PackageReference Include="Microsoft.Extensions.Logging.Debug" Version="10.0.0" />
+		<!-- SkiaSharp removed: use chart library later when packages are available -->
 	</ItemGroup>
 
 	<ItemGroup>
 	  <MauiXaml Update="Pages\MonthlyGraphPage.xaml">
+      <Generator>MSBuild:Compile</Generator>
+		<Content>Placeholder for MonthlyGraphPage</Content>
+	  </MauiXaml>
+	  <MauiXaml Update="Resources\Styles\Colors.xaml">
+	    <Generator>MSBuild:Compile</Generator>
+	  </MauiXaml>
+	  <MauiXaml Update="Resources\Styles\Styles.xaml">
 	    <Generator>MSBuild:Compile</Generator>
 	  </MauiXaml>
 	</ItemGroup>

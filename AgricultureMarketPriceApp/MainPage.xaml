@@ -2,38 +2,59 @@
 <ContentPage xmlns="http://schemas.microsoft.com/dotnet/2021/maui"
              xmlns:x="http://schemas.microsoft.com/winfx/2009/xaml"
              xmlns:pages="clr-namespace:AgricultureMarketPriceApp.Pages"
+             xmlns:models="clr-namespace:AgricultureMarketPriceApp.Models"
              x:Class="AgricultureMarketPriceApp.MainPage"
              Title="Daily Prices">
 
-    <VerticalStackLayout Padding="12">
-        <HorizontalStackLayout Padding="0,8" Spacing="8">
-            <Entry x:Name="ApiKeyEntry" Placeholder="Enter API Key" HorizontalOptions="FillAndExpand" />
-            <Button Text="Save Key" Clicked="OnSaveApiKeyClicked" />
-        </HorizontalStackLayout>
-        <Label x:Name="ApiKeyStatusLabel" FontSize="Small" TextColor="Gray" />
+    <Grid RowDefinitions="Auto, Auto, *" Padding="0">
+        <!-- Header -->
+        <Grid Row="0" BackgroundColor="#12A85A" HeightRequest="120" Padding="16">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
 
-        <HorizontalStackLayout HorizontalOptions="Fill" VerticalOptions="Center" Padding="0,8">
-            <Label Text="Daily Market Prices" FontAttributes="Bold" HorizontalOptions="StartAndExpand" />
-            <Button Text="Monthly Graph" Clicked="OnMonthlyGraphClicked" />
-        </HorizontalStackLayout>
+            <Image Source="dotnet_bot.png" HeightRequest="40" WidthRequest="40" VerticalOptions="Center" />
+            <StackLayout Grid.Column="1" VerticalOptions="Center">
+                <Label Text="Market Prices" FontAttributes="Bold" TextColor="White" FontSize="20" />
+                <Label Text="Daily updated agricultural prices" TextColor="White" FontSize="12" />
+            </StackLayout>
 
-        <CollectionView x:Name="PricesCollection" SelectionMode="Single" ItemsLayout="VerticalList">
+            <StackLayout Grid.Column="2" VerticalOptions="Center" HorizontalOptions="End">
+                <Label Text="Today" TextColor="White" HorizontalOptions="End" />
+                <Label Text="Dec 21, 2024" TextColor="White" FontSize="12" HorizontalOptions="End" />
+            </StackLayout>
+        </Grid>
+
+        <StackLayout Grid.Row="1" Orientation="Horizontal" Padding="12" Spacing="8">
+            <Picker x:Name="StatePicker" Title="State" WidthRequest="160" />
+            <Picker x:Name="CommodityPicker" Title="Commodity" WidthRequest="160" />
+            <Button Text="Apply" Clicked="OnApplyFiltersClicked" />
+        </StackLayout>
+
+        <CollectionView x:Name="PricesCollection" Grid.Row="2" Margin="12" SelectionMode="Single" ItemsLayout="VerticalList">
             <CollectionView.ItemTemplate>
-                <DataTemplate>
-                    <Border StrokeShape="RoundRectangle 6">
-                        <Grid Padding="8">
-                            <Grid.RowDefinitions>
-                                <RowDefinition Height="Auto" />
-                                <RowDefinition Height="Auto" />
-                            </Grid.RowDefinitions>
-                            <Label Text="{Binding Commodity}" FontAttributes="Bold" />
-                            <Label Grid.Row="1" Text="{Binding Market}" FontSize="Small" />
-                            <Label Grid.Row="0" Grid.Column="1" Text="{Binding Modal_price, StringFormat='₹{0:N0}'}" HorizontalOptions="End" />
+                <DataTemplate x:DataType="models:CommoditySummary">
+                    <Frame BackgroundColor="White" CornerRadius="12" Padding="12" Margin="8,6" HasShadow="False" BorderColor="#E1E1E1">
+                        <Grid ColumnDefinitions="Auto, *, Auto" RowDefinitions="Auto">
+                            <Image Source="{Binding Icon}" WidthRequest="48" HeightRequest="48" />
+
+                            <StackLayout Grid.Column="1" Padding="8,0">
+                                <Label Text="{Binding Commodity}" FontAttributes="Bold" />
+                                <Label Text="{Binding AverageModalPrice, StringFormat='₹{0:N0}'}" FontSize="14" TextColor="{StaticResource Gray600}" />
+                            </StackLayout>
+
+                            <StackLayout Grid.Column="2" VerticalOptions="Center">
+                                <Frame BackgroundColor="{Binding PercentChange, Converter={StaticResource PercentToBrushConverter}}" CornerRadius="6" Padding="6,4" HasShadow="False" BorderColor="Transparent">
+                                    <Label Text="{Binding PercentChange, StringFormat='{0:+0.0%;-0.0%}'}" TextColor="#0DAF6A" FontSize="12" />
+                                </Frame>
+                            </StackLayout>
                         </Grid>
-                    </Border>
+                    </Frame>
                 </DataTemplate>
             </CollectionView.ItemTemplate>
         </CollectionView>
-    </VerticalStackLayout>
+    </Grid>
 
 </ContentPage>

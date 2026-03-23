@@ -6,5 +6,6 @@ namespace AgricultureMarketPriceApp.Pages
         {
             InitializeComponent();
         }
+
     }
 }
