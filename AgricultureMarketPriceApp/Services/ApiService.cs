@@ -1,4 +1,5 @@
 using System.Net.Http.Json;
+using System.Xml.Linq;
 using AgricultureMarketPriceApp.Models;
 
 namespace AgricultureMarketPriceApp.Services
@@ -6,7 +7,7 @@ namespace AgricultureMarketPriceApp.Services
     public class ApiService
     {
         private readonly HttpClient _client;
-        private const string BaseApiUrl = "https://api.data.gov.in/resource/9ef84268-d588-465a-a308-a864a43d0070";
+        private const string BaseApiUrl = "https://api.data.gov.in/resource/35985678-0d79-46b4-9ed6-6f13308a1d24";
         // Default API key (provided by user). You can override by passing apiKey to the methods.
         private const string DefaultApiKey = "579b464db66ec23bdd0000015349a47eb21342e65d32b8c385aeb5e0";
 
@@ -29,7 +30,8 @@ namespace AgricultureMarketPriceApp.Services
                     apiKey = DefaultApiKey;
                 var url = new System.Text.StringBuilder();
                 url.Append(BaseApiUrl);
-                url.Append("?format=json");
+                // API now returns XML. Request XML format and parse accordingly.
+                url.Append("?format=xml");
                 url.Append("&limit=").Append(limit);
 
                 if (!string.IsNullOrWhiteSpace(state))
@@ -50,20 +52,44 @@ namespace AgricultureMarketPriceApp.Services
                     return new List<PriceRecord>();
 
                 await using var stream = await resp.Content.ReadAsStreamAsync();
-                using var doc = await System.Text.Json.JsonDocument.ParseAsync(stream);
-                if (!doc.RootElement.TryGetProperty("records", out var records))
+                // Parse XML response and map <records><item> elements to PriceRecord
+                var xdoc = XDocument.Load(stream);
+                var recordsEl = xdoc.Root?.Element("records");
+                if (recordsEl == null)
                     return new List<PriceRecord>();
 
                 var list = new List<PriceRecord>();
-                foreach (var el in records.EnumerateArray())
+                foreach (var item in recordsEl.Elements("item"))
                 {
                     try
                     {
-                        var rec = System.Text.Json.JsonSerializer.Deserialize<PriceRecord>(el.GetRawText());
-                        if (rec != null)
-                            list.Add(rec);
+                        var rec = new PriceRecord
+                        {
+                            State = (string?)item.Element("State") ?? (string?)item.Element("state"),
+                            District = (string?)item.Element("District") ?? (string?)item.Element("district"),
+                            Market = (string?)item.Element("Market") ?? (string?)item.Element("market"),
+                            Commodity = (string?)item.Element("Commodity") ?? (string?)item.Element("commodity"),
+                            Variety = (string?)item.Element("Variety") ?? (string?)item.Element("variety"),
+                            Grade = (string?)item.Element("Grade") ?? (string?)item.Element("grade"),
+                            Arrival_Date = (string?)item.Element("Arrival_Date") ?? (string?)item.Element("arrival_date"),
+                        };
+
+                        // Parse numeric price fields (may be missing or non-numeric)
+                        if (double.TryParse((string?)item.Element("Min_Price") ?? (string?)item.Element("min_price"), out var minv))
+                            rec.Min_price = minv;
+
+                        if (double.TryParse((string?)item.Element("Max_Price") ?? (string?)item.Element("max_price"), out var maxv))
+                            rec.Max_price = maxv;
+
+                        if (double.TryParse((string?)item.Element("Modal_Price") ?? (string?)item.Element("modal_price"), out var modv))
+                            rec.Modal_price = modv;
+
+                        list.Add(rec);
                     }
-                    catch { }
+                    catch
+                    {
+                        // ignore malformed item and continue
+                    }
                 }
 
                 return list;
@@ -90,7 +116,8 @@ namespace AgricultureMarketPriceApp.Services
                     apiKey = DefaultApiKey;
                 var url = new System.Text.StringBuilder();
                 url.Append(BaseApiUrl);
-                url.Append("?format=json");
+                // Request XML format for the updated API response
+                url.Append("?format=xml");
                 url.Append("&limit=").Append(limit);
 
                 if (!string.IsNullOrWhiteSpace(state))
@@ -109,20 +136,53 @@ namespace AgricultureMarketPriceApp.Services
                 if (!resp.IsSuccessStatusCode)
                     return ApiResult<List<PriceRecord>>.FromError((int)resp.StatusCode, resp.ReasonPhrase, content);
 
-                using var doc = System.Text.Json.JsonDocument.Parse(content);
-                if (!doc.RootElement.TryGetProperty("records", out var records))
-                    return ApiResult<List<PriceRecord>>.FromError((int)resp.StatusCode, "NoRecords", content, "Response did not contain records");
+                // Parse XML content and extract <records><item> entries
+                XDocument xdoc;
+                try
+                {
+                    xdoc = XDocument.Parse(content);
+                }
+                catch (Exception ex)
+                {
+                    return ApiResult<List<PriceRecord>>.FromError((int)resp.StatusCode, "InvalidXml", content, ex.Message);
+                }
+
+                var recordsEl = xdoc.Root?.Element("records");
+                if (recordsEl == null)
+                    return ApiResult<List<PriceRecord>>.FromError((int)resp.StatusCode, "NoRecords", content, "Response did not contain records element");
 
                 var list = new List<PriceRecord>();
-                foreach (var el in records.EnumerateArray())
+                foreach (var item in recordsEl.Elements("item"))
                 {
                     try
                     {
-                        var rec = System.Text.Json.JsonSerializer.Deserialize<PriceRecord>(el.GetRawText());
-                        if (rec != null)
-                            list.Add(rec);
+                        var rec = new PriceRecord
+                        {
+                            State = (string?)item.Element("State") ?? (string?)item.Element("state"),
+                            District = (string?)item.Element("District") ?? (string?)item.Element("district"),
+                            Market = (string?)item.Element("Market") ?? (string?)item.Element("market"),
+                            Commodity = (string?)item.Element("Commodity") ?? (string?)item.Element("commodity"),
+                            Variety = (string?)item.Element("Variety") ?? (string?)item.Element("variety"),
+                            Grade = (string?)item.Element("Grade") ?? (string?)item.Element("grade"),
+                            Arrival_Date = (string?)item.Element("Arrival_Date") ?? (string?)item.Element("arrival_date"),
+                            Commodity_Code = (string?)item.Element("Commodity_Code") ?? (string?)item.Element("commodity_code"),
+                        };
+
+                        if (double.TryParse((string?)item.Element("Min_Price") ?? (string?)item.Element("min_price"), out var minv))
+                            rec.Min_price = minv;
+
+                        if (double.TryParse((string?)item.Element("Max_Price") ?? (string?)item.Element("max_price"), out var maxv))
+                            rec.Max_price = maxv;
+
+                        if (double.TryParse((string?)item.Element("Modal_Price") ?? (string?)item.Element("modal_price"), out var modv))
+                            rec.Modal_price = modv;
+
+                        list.Add(rec);
                     }
-                    catch { }
+                    catch
+                    {
+                        // ignore malformed item
+                    }
                 }
 
                 return ApiResult<List<PriceRecord>>.FromSuccess(list);

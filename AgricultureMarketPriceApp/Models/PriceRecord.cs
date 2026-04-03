@@ -33,5 +33,8 @@ namespace AgricultureMarketPriceApp.Models
 
         [JsonPropertyName("modal_price")]
         public double? Modal_price { get; set; }
+
+        [JsonPropertyName("commodity_code")]
+        public string Commodity_Code { get; set; }
     }
 }
