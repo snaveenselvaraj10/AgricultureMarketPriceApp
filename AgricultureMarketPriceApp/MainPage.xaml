@@ -28,8 +28,9 @@
         </Grid>
 
         <StackLayout Grid.Row="1" Orientation="Horizontal" Padding="12" Spacing="8">
-            <Picker x:Name="StatePicker" Title="State" WidthRequest="160" />
-            <Picker x:Name="CommodityPicker" Title="Commodity" WidthRequest="160" />
+            <Picker x:Name="StatePicker" Title="State" WidthRequest="140" />
+            <Picker x:Name="DistrictPicker" Title="District" WidthRequest="140" />
+            <Picker x:Name="CommodityPicker" Title="Commodity" WidthRequest="140" />
             <Button Text="Apply" Clicked="OnApplyFiltersClicked" />
         </StackLayout>
 

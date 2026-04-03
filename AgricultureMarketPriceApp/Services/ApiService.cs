@@ -1,5 +1,4 @@
 using System.Net.Http.Json;
-using System.Xml.Linq;
 using AgricultureMarketPriceApp.Models;
 
 namespace AgricultureMarketPriceApp.Services
@@ -22,7 +21,7 @@ namespace AgricultureMarketPriceApp.Services
 
         // New API: pass your apiKey and optional state/commodity filters.
         // filters[state.keyword] and filters[commodity] are used by the data.gov.in API.
-        public async Task<List<PriceRecord>> GetDailyPricesAsync(string apiKey, string state = null, string commodity = null, int limit = 100)
+        public async Task<List<PriceRecord>> GetDailyPricesAsync(string apiKey, string state = null, string commodity = null, string district = null, int limit = 100)
         {
             try
             {
@@ -30,8 +29,8 @@ namespace AgricultureMarketPriceApp.Services
                     apiKey = DefaultApiKey;
                 var url = new System.Text.StringBuilder();
                 url.Append(BaseApiUrl);
-                // API now returns XML. Request XML format and parse accordingly.
-                url.Append("?format=xml");
+                // API returns JSON. Request JSON format and parse accordingly.
+                url.Append("?format=json");
                 url.Append("&limit=").Append(limit);
 
                 if (!string.IsNullOrWhiteSpace(state))
@@ -41,55 +40,74 @@ namespace AgricultureMarketPriceApp.Services
 
                 if (!string.IsNullOrWhiteSpace(commodity))
                 {
-                    url.Append("&filters[commodity]=").Append(Uri.EscapeDataString(commodity));
+                    // commodity is a keyword field; use .keyword for exact match
+                    url.Append("&filters[commodity.keyword]=").Append(Uri.EscapeDataString(commodity));
                 }
-
+                if (!string.IsNullOrWhiteSpace(district))
+                {
+                    // district is a keyword field; use .keyword for exact match
+                    url.Append("&filters[district.keyword]=").Append(Uri.EscapeDataString(district));
+                }
                 // apiKey will always be set (falls back to DefaultApiKey if not provided)
                 url.Append("&api-key=").Append(Uri.EscapeDataString(apiKey));
-
                 var resp = await _client.GetAsync(url.ToString());
                 if (!resp.IsSuccessStatusCode)
                     return new List<PriceRecord>();
 
-                await using var stream = await resp.Content.ReadAsStreamAsync();
-                // Parse XML response and map <records><item> elements to PriceRecord
-                var xdoc = XDocument.Load(stream);
-                var recordsEl = xdoc.Root?.Element("records");
-                if (recordsEl == null)
+                var content = await resp.Content.ReadAsStringAsync();
+                using var doc = System.Text.Json.JsonDocument.Parse(content);
+                if (!doc.RootElement.TryGetProperty("records", out var records))
                     return new List<PriceRecord>();
 
                 var list = new List<PriceRecord>();
-                foreach (var item in recordsEl.Elements("item"))
+                foreach (var el in records.EnumerateArray())
                 {
                     try
                     {
+                        string GetString(System.Text.Json.JsonElement e, params string[] names)
+                        {
+                            foreach (var n in names)
+                            {
+                                if (e.TryGetProperty(n, out var v) && v.ValueKind != System.Text.Json.JsonValueKind.Null)
+                                    return v.GetString();
+                            }
+                            return null;
+                        }
+
+                        string sState = GetString(el, "State", "state");
+                        string sDistrict = GetString(el, "District", "district");
+                        string sMarket = GetString(el, "Market", "market");
+                        string sCommodity = GetString(el, "Commodity", "commodity");
+                        string sVariety = GetString(el, "Variety", "variety");
+                        string sGrade = GetString(el, "Grade", "grade");
+                        string sArrival = GetString(el, "Arrival_Date", "arrival_date");
+                        string sMinp = GetString(el, "Min_Price", "min_price");
+                        string sMaxp = GetString(el, "Max_Price", "max_price");
+                        string sModp = GetString(el, "Modal_Price", "modal_price");
+                        string sCommcode = GetString(el, "Commodity_Code", "commodity_code");
+
                         var rec = new PriceRecord
                         {
-                            State = (string?)item.Element("State") ?? (string?)item.Element("state"),
-                            District = (string?)item.Element("District") ?? (string?)item.Element("district"),
-                            Market = (string?)item.Element("Market") ?? (string?)item.Element("market"),
-                            Commodity = (string?)item.Element("Commodity") ?? (string?)item.Element("commodity"),
-                            Variety = (string?)item.Element("Variety") ?? (string?)item.Element("variety"),
-                            Grade = (string?)item.Element("Grade") ?? (string?)item.Element("grade"),
-                            Arrival_Date = (string?)item.Element("Arrival_Date") ?? (string?)item.Element("arrival_date"),
+                            State = sState,
+                            District = sDistrict,
+                            Market = sMarket,
+                            Commodity = sCommodity,
+                            Variety = sVariety,
+                            Grade = sGrade,
+                            Arrival_Date = sArrival,
+                            Commodity_Code = sCommcode
                         };
 
-                        // Parse numeric price fields (may be missing or non-numeric)
-                        if (double.TryParse((string?)item.Element("Min_Price") ?? (string?)item.Element("min_price"), out var minv))
+                        if (double.TryParse(sMinp, out var minv))
                             rec.Min_price = minv;
-
-                        if (double.TryParse((string?)item.Element("Max_Price") ?? (string?)item.Element("max_price"), out var maxv))
+                        if (double.TryParse(sMaxp, out var maxv))
                             rec.Max_price = maxv;
-
-                        if (double.TryParse((string?)item.Element("Modal_Price") ?? (string?)item.Element("modal_price"), out var modv))
+                        if (double.TryParse(sModp, out var modv))
                             rec.Modal_price = modv;
 
                         list.Add(rec);
                     }
-                    catch
-                    {
-                        // ignore malformed item and continue
-                    }
+                    catch { }
                 }
 
                 return list;
@@ -100,12 +118,12 @@ namespace AgricultureMarketPriceApp.Services
             }
         }
 
-        // Overloads that accept enums for convenience
-        public Task<List<PriceRecord>> GetDailyPricesAsync(string apiKey, StateEnum state, CommodityEnum commodity, int limit = 100)
-            => GetDailyPricesAsync(apiKey, state.ToApiState(), commodity.ToApiCommodity(), limit);
+        // Overloads that accept enums for convenience (include district)
+        public Task<List<PriceRecord>> GetDailyPricesAsync(string apiKey, StateEnum state, DistrictEnum district, CommodityEnum commodity, int limit = 100)
+            => GetDailyPricesAsync(apiKey, state.ToApiState(), commodity.ToApiCommodity(), district.ToApiDistrict(), limit);
 
-        public Task<List<PriceRecord>> GetDailyPricesAsync(StateEnum state, CommodityEnum commodity, int limit = 100)
-            => GetDailyPricesAsync(apiKey: null, state: state.ToApiState(), commodity: commodity.ToApiCommodity(), limit: limit);
+        public Task<List<PriceRecord>> GetDailyPricesAsync(StateEnum state, DistrictEnum district, CommodityEnum commodity, int limit = 100)
+            => GetDailyPricesAsync(apiKey: null, state: state.ToApiState(), commodity: commodity.ToApiCommodity(), district: district.ToApiDistrict(), limit: limit);
 
         // Return diagnostics with HTTP details
         public async Task<ApiResult<List<PriceRecord>>> GetDailyPricesWithDiagnosticsAsync(string apiKey, string state = null, string commodity = null, int limit = 100)
@@ -137,10 +155,10 @@ namespace AgricultureMarketPriceApp.Services
                     return ApiResult<List<PriceRecord>>.FromError((int)resp.StatusCode, resp.ReasonPhrase, content);
 
                 // Parse XML content and extract <records><item> entries
-                XDocument xdoc;
+                System.Xml.Linq.XDocument xdoc;
                 try
                 {
-                    xdoc = XDocument.Parse(content);
+                    xdoc = System.Xml.Linq.XDocument.Parse(content);
                 }
                 catch (Exception ex)
                 {
