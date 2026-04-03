@@ -1,0 +1,20 @@
+name: CI
+
+on:
+  push:
+    branches: ['feature/*', 'main']
+  pull_request:
+    branches: ['main']
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Print trigger info
+        run: |
+          echo "Repository: ${{ github.repository }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Event: ${{ github.event_name }}"
+      - name: Confirm success
+        run: echo "CI workflow triggered successfully"
