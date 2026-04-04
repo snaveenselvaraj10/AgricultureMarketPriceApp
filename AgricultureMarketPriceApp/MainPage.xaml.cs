@@ -68,6 +68,21 @@ namespace AgricultureMarketPriceApp
         private async Task LoadSummariesAsync(string state = null, string district = null, string commodity = null)
         {
             var latest = await _apiService.GetDailyPricesAsync(apiKey: null, state: state, commodity: commodity, district: district, limit: 500);
+            // If API returned no records try diagnostic endpoint (XML) to get more info or fallback
+            if (latest == null || !latest.Any())
+            {
+                try
+                {
+                    var diag = await _apiService.GetDailyPricesWithDiagnosticsAsync(apiKey: null, state: state, commodity: commodity, limit: 500);
+                    if (diag != null && diag.Success && diag.Data != null && diag.Data.Any())
+                        latest = diag.Data;
+                }
+                catch
+                {
+                    // ignore and fall through to empty result
+                }
+            }
+
             if (latest == null || !latest.Any())
             {
                 PricesCollection.ItemsSource = new List<Models.CommoditySummary>();
@@ -82,11 +97,21 @@ namespace AgricultureMarketPriceApp
                 Icon = "dotnet_bot.png"
             }).ToList();
 
-            var dates = latest.Select(r => r.Arrival_Date).Distinct().ToList();
+            var dates = latest.Select(r => r.Arrival_Date).Where(x => !string.IsNullOrWhiteSpace(x)).Distinct().ToList();
             if (dates.Count >= 2)
             {
-                var parsed = dates.Select(d => DateTime.TryParseExact(d, "dd/MM/yyyy", null, System.Globalization.DateTimeStyles.None, out var dt) ? dt : (DateTime?)null)
-                    .Where(x => x.HasValue).Select(x => x.Value).OrderByDescending(x => x).ToList();
+                // support multiple common date formats returned by APIs
+                var formats = new[] { "dd/MM/yyyy", "d/M/yyyy", "yyyy-MM-dd", "yyyy-MM-ddTHH:mm:ssZ", "yyyy-MM-ddTHH:mm:ss", "MM/dd/yyyy" };
+                var parsed = dates.Select(d =>
+                {
+                    if (string.IsNullOrWhiteSpace(d)) return (DateTime?)null;
+                    if (DateTime.TryParseExact(d, formats, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out var dt))
+                        return (DateTime?)dt.Date;
+                    if (DateTime.TryParse(d, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeLocal, out var dt2))
+                        return (DateTime?)dt2.Date;
+                    return (DateTime?)null;
+                })
+                .Where(x => x.HasValue).Select(x => x.Value).OrderByDescending(x => x).ToList();
 
                 if (parsed.Count >= 2)
                 {
@@ -122,7 +147,7 @@ namespace AgricultureMarketPriceApp
 
             // call enum overload if all selected are enums
             if (!string.IsNullOrWhiteSpace(state) && !string.IsNullOrWhiteSpace(district) && !string.IsNullOrWhiteSpace(commodity) &&
-                Enum.TryParse<Services.StateEnum>(state, out var se) && Enum.TryParse<Services.DistrictEnum>(district, out var de) && Enum.TryParse<Services.CommodityEnum>(commodity, out var ce))
+                Services.ApiEnumExtensions.TryParseState(state, out var se) && Services.ApiEnumExtensions.TryParseDistrict(district, out var de) && Services.ApiEnumExtensions.TryParseCommodity(commodity, out var ce))
             {
                 var records = await _apiService.GetDailyPricesAsync(se, de, ce, limit: 500);
                 // reuse logic from LoadSummariesAsync by temporarily setting data

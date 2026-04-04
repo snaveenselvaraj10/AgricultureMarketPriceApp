@@ -65,6 +65,55 @@ namespace AgricultureMarketPriceApp.Services
 
     public static class ApiEnumExtensions
     {
+        // Try-parse helpers that map API display strings back to enums.
+        public static bool TryParseState(string display, out StateEnum state)
+        {
+            state = StateEnum.Unknown;
+            if (string.IsNullOrWhiteSpace(display)) return false;
+            foreach (StateEnum se in Enum.GetValues(typeof(StateEnum)))
+            {
+                var api = se.ToApiState();
+                if (string.Equals(api, display, StringComparison.OrdinalIgnoreCase) || string.Equals(se.ToString(), display, StringComparison.OrdinalIgnoreCase))
+                {
+                    state = se;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool TryParseCommodity(string display, out CommodityEnum commodity)
+        {
+            commodity = CommodityEnum.Unknown;
+            if (string.IsNullOrWhiteSpace(display)) return false;
+            foreach (CommodityEnum ce in Enum.GetValues(typeof(CommodityEnum)))
+            {
+                var api = ce.ToApiCommodity();
+                if (string.Equals(api, display, StringComparison.OrdinalIgnoreCase) || string.Equals(ce.ToString(), display, StringComparison.OrdinalIgnoreCase))
+                {
+                    commodity = ce;
+                    return true;
+                }
+            }
+            return false;
+        }
+
+        public static bool TryParseDistrict(string display, out DistrictEnum district)
+        {
+            district = DistrictEnum.Unknown;
+            if (string.IsNullOrWhiteSpace(display)) return false;
+            foreach (DistrictEnum de in Enum.GetValues(typeof(DistrictEnum)))
+            {
+                var api = de.ToApiDistrict();
+                if (string.Equals(api, display, StringComparison.OrdinalIgnoreCase) || string.Equals(de.ToString(), display, StringComparison.OrdinalIgnoreCase))
+                {
+                    district = de;
+                    return true;
+                }
+            }
+            return false;
+        }
+
         public static string ToApiState(this StateEnum state)
         {
             return state switch

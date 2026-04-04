@@ -6,6 +6,7 @@ namespace AgricultureMarketPriceApp.Services
     public class ApiService
     {
         private readonly HttpClient _client;
+        public string LastRequest { get; private set; }
         private const string BaseApiUrl = "https://api.data.gov.in/resource/35985678-0d79-46b4-9ed6-6f13308a1d24";
         // Default API key (provided by user). You can override by passing apiKey to the methods.
         private const string DefaultApiKey = "579b464db66ec23bdd0000015349a47eb21342e65d32b8c385aeb5e0";
@@ -13,6 +14,11 @@ namespace AgricultureMarketPriceApp.Services
         public ApiService()
         {
             _client = new HttpClient();
+            // Ensure API returns JSON and some servers require a User-Agent
+            _client.DefaultRequestHeaders.Accept.Clear();
+            _client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+            if (_client.DefaultRequestHeaders.UserAgent.Count == 0)
+                _client.DefaultRequestHeaders.UserAgent.ParseAdd("AgricultureMarketPriceApp/1.0");
         }
 
         // Backwards-compatible: fetch default set (no filters, no api-key)
@@ -35,26 +41,35 @@ namespace AgricultureMarketPriceApp.Services
 
                 if (!string.IsNullOrWhiteSpace(state))
                 {
-                    url.Append("&filters[state.keyword]=").Append(Uri.EscapeDataString(state));
+                    // API expects the field names with their exact casing (State, District, Commodity)
+                    // Use filters[State] to match the data.gov.in examples.
+                    url.Append("&filters[State]=").Append(Uri.EscapeDataString(state));
                 }
 
                 if (!string.IsNullOrWhiteSpace(commodity))
                 {
-                    // commodity is a keyword field; use .keyword for exact match
-                    url.Append("&filters[commodity.keyword]=").Append(Uri.EscapeDataString(commodity));
+                    url.Append("&filters[Commodity]=").Append(Uri.EscapeDataString(commodity));
                 }
+
                 if (!string.IsNullOrWhiteSpace(district))
                 {
-                    // district is a keyword field; use .keyword for exact match
-                    url.Append("&filters[district.keyword]=").Append(Uri.EscapeDataString(district));
+                    url.Append("&filters[District]=").Append(Uri.EscapeDataString(district));
                 }
                 // apiKey will always be set (falls back to DefaultApiKey if not provided)
                 url.Append("&api-key=").Append(Uri.EscapeDataString(apiKey));
-                var resp = await _client.GetAsync(url.ToString());
+                var requestUrl = url.ToString();
+                LastRequest = requestUrl;
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("ApiService GET: " + requestUrl);
+#endif
+                var resp = await _client.GetAsync(requestUrl);
                 if (!resp.IsSuccessStatusCode)
                     return new List<PriceRecord>();
 
                 var content = await resp.Content.ReadAsStringAsync();
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("ApiService Response (truncated): " + (content?.Length > 1000 ? content.Substring(0, 1000) + "..." : content));
+#endif
                 using var doc = System.Text.Json.JsonDocument.Parse(content);
                 if (!doc.RootElement.TryGetProperty("records", out var records))
                     return new List<PriceRecord>();
@@ -120,7 +135,7 @@ namespace AgricultureMarketPriceApp.Services
 
         // Overloads that accept enums for convenience (include district)
         public Task<List<PriceRecord>> GetDailyPricesAsync(string apiKey, StateEnum state, DistrictEnum district, CommodityEnum commodity, int limit = 100)
-            => GetDailyPricesAsync(apiKey, state.ToApiState(), commodity.ToApiCommodity(), district.ToApiDistrict(), limit);
+            => GetDailyPricesAsync(apiKey: apiKey, state: state.ToApiState(), commodity: commodity.ToApiCommodity(), district: district.ToApiDistrict(), limit: limit);
 
         public Task<List<PriceRecord>> GetDailyPricesAsync(StateEnum state, DistrictEnum district, CommodityEnum commodity, int limit = 100)
             => GetDailyPricesAsync(apiKey: null, state: state.ToApiState(), commodity: commodity.ToApiCommodity(), district: district.ToApiDistrict(), limit: limit);

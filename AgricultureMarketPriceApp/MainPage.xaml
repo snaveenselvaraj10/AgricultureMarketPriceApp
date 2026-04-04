@@ -27,11 +27,15 @@
             </StackLayout>
         </Grid>
 
-        <StackLayout Grid.Row="1" Orientation="Horizontal" Padding="12" Spacing="8">
-            <Picker x:Name="StatePicker" Title="State" WidthRequest="140" />
-            <Picker x:Name="DistrictPicker" Title="District" WidthRequest="140" />
-            <Picker x:Name="CommodityPicker" Title="Commodity" WidthRequest="140" />
-            <Button Text="Apply" Clicked="OnApplyFiltersClicked" />
+        <!-- Filters row: pickers and apply button, plus a diagnostics label for debugging API requests -->
+        <StackLayout Grid.Row="1" Orientation="Vertical" Padding="12" Spacing="8">
+            <StackLayout Orientation="Horizontal" Spacing="8">
+                <Picker x:Name="StatePicker" Title="State" WidthRequest="140" />
+                <Picker x:Name="DistrictPicker" Title="District" WidthRequest="140" />
+                <Picker x:Name="CommodityPicker" Title="Commodity" WidthRequest="140" />
+                <Button Text="Apply" Clicked="OnApplyFiltersClicked" />
+            </StackLayout>
+            <Label x:Name="DiagnosticsLabel" FontSize="12" TextColor="#666" LineBreakMode="TailTruncation" />
         </StackLayout>
 
         <CollectionView x:Name="PricesCollection" Grid.Row="2" Margin="12" SelectionMode="Single" ItemsLayout="VerticalList">
