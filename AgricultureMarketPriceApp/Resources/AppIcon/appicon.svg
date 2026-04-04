@@ -1,4 +1,31 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<svg width="456" height="456" viewBox="0 0 456 456" version="1.1" xmlns="http://www.w3.org/2000/svg">
-    <rect x="0" y="0" width="456" height="456" fill="#512BD4" />
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- Background -->
+  <rect width="1024" height="1024" rx="220" fill="#4CAF50"/>
+
+  <!-- Sun -->
+  <circle cx="750" cy="250" r="80" fill="#FFD54F"/>
+
+  <!-- Farmer Head -->
+  <circle cx="512" cy="380" r="140" fill="#F1C27D"/>
+
+  <!-- Hat -->
+  <ellipse cx="512" cy="300" rx="200" ry="80" fill="#C68642"/>
+  <rect x="350" y="260" width="320" height="60" rx="30" fill="#D9A066"/>
+
+  <!-- Body -->
+  <rect x="350" y="480" width="320" height="260" rx="60" fill="#2E7D32"/>
+
+  <!-- Rice Bundle -->
+  <g>
+    <ellipse cx="420" cy="600" rx="120" ry="60" fill="#FFC107"/>
+    <ellipse cx="450" cy="560" rx="100" ry="50" fill="#FFD54F"/>
+    <ellipse cx="480" cy="620" rx="100" ry="50" fill="#FFB300"/>
+  </g>
+
+  <!-- Hands -->
+  <circle cx="400" cy="620" r="40" fill="#F1C27D"/>
+  <circle cx="580" cy="620" r="40" fill="#F1C27D"/>
+
+  <!-- Smile -->
+  <path d="M460 420 Q512 470 560 420" stroke="#5D4037" stroke-width="8" fill="none"/>
 </svg>

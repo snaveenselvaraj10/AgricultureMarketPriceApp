@@ -1,3 +1,4 @@
 <Solution>
+  <Project Path="AgricultureMarketPriceApp.Tests/AgricultureMarketPriceApp.Tests.csproj" />
   <Project Path="AgricultureMarketPriceApp/AgricultureMarketPriceApp.csproj" />
 </Solution>
