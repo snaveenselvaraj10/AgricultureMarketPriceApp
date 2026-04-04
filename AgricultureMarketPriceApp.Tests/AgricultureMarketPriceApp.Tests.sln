@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 18
+VisualStudioVersion = 18.4.11626.88 stable
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgricultureMarketPriceApp.Tests", "AgricultureMarketPriceApp.Tests.csproj", "{F63E47EE-FA99-0D92-2E6D-E640AE7C561B}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "AgricultureMarketPriceApp", "..\AgricultureMarketPriceApp\AgricultureMarketPriceApp.csproj", "{83F9B84E-7131-04DE-011E-B3AF0F3B7378}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{F63E47EE-FA99-0D92-2E6D-E640AE7C561B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{F63E47EE-FA99-0D92-2E6D-E640AE7C561B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{F63E47EE-FA99-0D92-2E6D-E640AE7C561B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{F63E47EE-FA99-0D92-2E6D-E640AE7C561B}.Release|Any CPU.Build.0 = Release|Any CPU
+		{83F9B84E-7131-04DE-011E-B3AF0F3B7378}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{83F9B84E-7131-04DE-011E-B3AF0F3B7378}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{83F9B84E-7131-04DE-011E-B3AF0F3B7378}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{83F9B84E-7131-04DE-011E-B3AF0F3B7378}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {D06B5509-36E2-45D8-9B06-17BB0D83BE35}
+	EndGlobalSection
+EndGlobal
