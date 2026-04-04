@@ -21,6 +21,24 @@ namespace AgricultureMarketPriceApp.Services
                 _client.DefaultRequestHeaders.UserAgent.ParseAdd("AgricultureMarketPriceApp/1.0");
         }
 
+        // Constructor that accepts an existing HttpClient for testing or advanced scenarios
+        public ApiService(HttpClient client)
+        {
+            _client = client ?? new HttpClient();
+            // Ensure sensible defaults when a test/client doesn't set headers
+            try
+            {
+                if (_client.DefaultRequestHeaders.Accept.Count == 0)
+                    _client.DefaultRequestHeaders.Accept.Add(new System.Net.Http.Headers.MediaTypeWithQualityHeaderValue("application/json"));
+                if (_client.DefaultRequestHeaders.UserAgent.Count == 0)
+                    _client.DefaultRequestHeaders.UserAgent.ParseAdd("AgricultureMarketPriceApp/1.0");
+            }
+            catch
+            {
+                // ignore header setup failures in constrained environments
+            }
+        }
+
         // Backwards-compatible: fetch default set (no filters, no api-key)
         public Task<List<PriceRecord>> GetDailyPricesAsync()
             => GetDailyPricesAsync(apiKey: null, state: null, commodity: null, limit: 100);
